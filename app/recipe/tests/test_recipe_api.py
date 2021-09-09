@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe, Tag, Ingredient
+from core.models import Recipe
 
 # from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
@@ -32,10 +32,30 @@ class RecipeApiTests(TestCase):
         self.client = APIClient()
 
     def test_get_recipes(self):
-        """Test getting recipes from API"""
+        """Test getting recipes"""
         # Arrange
         recipe1 = sample_recipe(name='Cheese Puffs', description='puff in your cheese')
         recipe2 = sample_recipe(name='Lemon Pie', description='pie in your lemon')
 
         # Act
         res = self.client.get(RECIPES_URL)
+
+        # Assert
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+        self.assertEqual(res.data[0].get('name'), recipe1.name)
+        self.assertEqual(res.data[1].get('name'), recipe2.name)
+        self.assertEqual(res.data[0].get('description'), recipe1.description)
+        self.assertEqual(res.data[1].get('description'), recipe2.description)
+
+    def test_get_single_recipe(self):
+        """Test getting one recipe"""
+        # Arrange
+        recipe = sample_recipe()
+        url = detail_url(recipe.id)
+
+        # Act
+        res = self.client.get(url)
+
+        # Assert
+        self.assertEqual(res.data.get('name'), recipe.name)
