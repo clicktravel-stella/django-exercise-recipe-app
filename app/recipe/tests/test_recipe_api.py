@@ -65,6 +65,7 @@ class RecipeApiTests(TestCase):
 
     def test_create_recipe(self):
         """Test creating a recipe"""
+
         # Arrange
         payload = {
             'name': 'Chocolate Fondont',
@@ -74,6 +75,7 @@ class RecipeApiTests(TestCase):
                 {'name': 'Other stuff'}
             ]
         }
+        
         # Act
         res = self.client.post(RECIPES_URL, payload, format='json')
 
@@ -81,7 +83,6 @@ class RecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
         ingredients = recipe.ingredients.all()
-        print(ingredients[0])
         self.assertEqual(ingredients.count(), 2)
         self.assertTrue(ingredients.filter(
             name=res.data['ingredients'][0]['name']
