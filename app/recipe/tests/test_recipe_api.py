@@ -15,6 +15,7 @@ def detail_url(recipe_id):
     """Return recipe detail URL"""
     return reverse('recipe:recipe-detail', args=[recipe_id])
 
+
 def sample_recipe(**params):
     """Create and return a sample recipe"""
     defaults = {
@@ -34,8 +35,10 @@ class RecipeApiTests(TestCase):
     def test_get_recipes(self):
         """Test getting recipes"""
         # Arrange
-        recipe1 = sample_recipe(name='Cheese Puffs', description='puff in your cheese')
-        recipe2 = sample_recipe(name='Lemon Pie', description='pie in your lemon')
+        recipe1 = sample_recipe(name='Cheese Puffs',
+                                description='puff in your cheese')
+        recipe2 = sample_recipe(name='Lemon Pie',
+                                description='pie in your lemon')
 
         # Act
         res = self.client.get(RECIPES_URL)
@@ -59,3 +62,30 @@ class RecipeApiTests(TestCase):
 
         # Assert
         self.assertEqual(res.data.get('name'), recipe.name)
+
+    def test_create_recipe(self):
+        """Test creating a recipe"""
+        # Arrange
+        payload = {
+            'name': 'Chocolate Fondont',
+            'description': 'Melt worthy',
+            'ingredients': [
+                {'name': 'Chocolate'},
+                {'name': 'Other stuff'}
+            ]
+        }
+        # Act
+        res = self.client.post(RECIPES_URL, payload, format='json')
+
+        # Assert
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+        ingredients = recipe.ingredients.all()
+        print(ingredients[0])
+        self.assertEqual(ingredients.count(), 2)
+        self.assertTrue(ingredients.filter(
+            name=res.data['ingredients'][0]['name']
+            ).exists())
+        self.assertTrue(ingredients.filter(
+            name=res.data['ingredients'][1]['name']
+            ).exists())

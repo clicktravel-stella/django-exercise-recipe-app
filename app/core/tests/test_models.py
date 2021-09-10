@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from django.test import TestCase
 
 from core import models
@@ -15,3 +13,11 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(recipe), recipe.name)
+
+    def test_ingredient_str(self):
+        """Test the ingredient string representation"""
+        ingredient = models.Ingredient.objects.create(
+            name='Sugar n Spice'
+        )
+
+        self.assertEqual(str(ingredient), ingredient.name)
