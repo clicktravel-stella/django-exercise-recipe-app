@@ -4,9 +4,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe
+from core.models import Recipe, Ingredient
 
-# from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
 RECIPES_URL = reverse('recipe:recipe-list')
 
@@ -27,6 +26,12 @@ def sample_recipe(**params):
     return Recipe.objects.create(**defaults)
 
 
+def sample_ingredient(recipe, name='Chinese Five Spice'):
+    """Create and return a sample ingredient"""
+
+    return Ingredient.objects.create(name=name, recipe=recipe)
+
+
 class RecipeApiTests(TestCase):
 
     def setUp(self):
@@ -39,10 +44,8 @@ class RecipeApiTests(TestCase):
                                 description='puff in your cheese')
         recipe2 = sample_recipe(name='Lemon Pie',
                                 description='pie in your lemon')
-
         # Act
         res = self.client.get(RECIPES_URL)
-
         # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
@@ -56,10 +59,8 @@ class RecipeApiTests(TestCase):
         # Arrange
         recipe = sample_recipe()
         url = detail_url(recipe.id)
-
         # Act
         res = self.client.get(url)
-
         # Assert
         self.assertEqual(res.data.get('name'), recipe.name)
 
@@ -75,10 +76,8 @@ class RecipeApiTests(TestCase):
                 {'name': 'Other stuff'}
             ]
         }
-        
         # Act
         res = self.client.post(RECIPES_URL, payload, format='json')
-
         # Assert
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
@@ -90,3 +89,59 @@ class RecipeApiTests(TestCase):
         self.assertTrue(ingredients.filter(
             name=res.data['ingredients'][1]['name']
             ).exists())
+
+    def test_create_recipe_invalid(self):
+        """Test that recipe cannot be created without payload"""
+        # Arrange
+        payload = {
+            'name': '',
+        }
+        # Act
+        res = self.client.post(RECIPES_URL, payload, format='json')
+        # Assert
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_full_update_recipe(self):
+        """Test updating a recipe with put"""
+        # Arrange
+        recipe = sample_recipe()
+        recipe.ingredients.add(sample_ingredient(recipe=recipe))
+        payload = {
+            'name': 'Korma',
+            'description': 'Creamy Curry',
+            'ingredients': [
+                {'name': 'Chicken'},
+                {'name': 'Coconut Milk'}
+            ]
+        }
+        url = detail_url(recipe.id)
+        # Act
+        self.client.put(url, payload, format='json')
+        recipe.refresh_from_db()
+        # Assert
+        self.assertEqual(recipe.name, payload['name'])
+        self.assertEqual(recipe.description, payload['description'])
+
+    def test_partial_recipe_update(self):
+        """Test that recipe can be partially updated"""
+        # Arrange
+        recipe = sample_recipe()
+        url = detail_url(recipe.id)
+        payload = {'name': 'Beef bourguignon'}
+        # Act
+        res = self.client.patch(url, payload)
+        recipe.refresh_from_db()
+        # Assert
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.name, payload['name'])
+
+    def test_delete_recipe(self):
+        """Test recipe deletes successfully"""
+        # Arrange
+        recipe = sample_recipe()
+        url = detail_url(recipe.id)
+        # Act
+        res = self.client.delete(url)
+        # Assert
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Recipe.objects.filter(pk=recipe.id).exists())

@@ -28,8 +28,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         """Create recipe"""
         ingredient_data = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
-        for ingredient in ingredient_data:
-            Ingredient.objects.create(**ingredient, recipe=recipe)
+
+        if ingredient_data:
+            for ingredient in ingredient_data:
+                Ingredient.objects.create(**ingredient, recipe=recipe)
 
         return recipe
 
@@ -45,7 +47,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         Ingredient.objects.filter(recipe_id=self.instance.id).delete()
 
         recipe = Recipe.objects.get(id=self.instance.id)
-        for ingredient in ingredient_data:
-            Ingredient.objects.create(**ingredient, recipe=recipe)
+
+        if ingredient_data:
+            for ingredient in ingredient_data:
+                Ingredient.objects.create(**ingredient, recipe=recipe)
 
         return instance
