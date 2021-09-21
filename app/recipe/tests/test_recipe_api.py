@@ -106,6 +106,8 @@ class RecipeApiTests(TestCase):
         # Arrange
         recipe = sample_recipe()
         recipe.ingredients.add(sample_ingredient(recipe=recipe))
+        print(recipe)
+        print(recipe.ingredients.all())
         payload = {
             'name': 'Korma',
             'description': 'Creamy Curry',
@@ -121,11 +123,16 @@ class RecipeApiTests(TestCase):
         # Assert
         self.assertEqual(recipe.name, payload['name'])
         self.assertEqual(recipe.description, payload['description'])
+        ingredients = recipe.ingredients.all()
+        print(ingredients)
+        self.assertEqual(len(ingredients), 3)
 
     def test_partial_recipe_update(self):
         """Test that recipe can be partially updated"""
         # Arrange
         recipe = sample_recipe()
+        recipe.ingredients.add(sample_ingredient(recipe=recipe, name="Beef"))
+        recipe.ingredients.add(sample_ingredient(recipe=recipe, name="Wine"))
         url = detail_url(recipe.id)
         payload = {'name': 'Beef bourguignon'}
         # Act
@@ -134,6 +141,8 @@ class RecipeApiTests(TestCase):
         # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.name, payload['name'])
+        ingredients = recipe.ingredients.all()
+        self.assertEqual(ingredients.count(), 2)
 
     def test_delete_recipe(self):
         """Test recipe deletes successfully"""

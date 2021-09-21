@@ -44,9 +44,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         instance.save()
 
-        Ingredient.objects.filter(recipe_id=self.instance.id).delete()
+        # Ingredient.objects.filter(recipe_id=self.instance.id).delete()
 
-        recipe = Recipe.objects.get(id=self.instance.id)
+        recipe = self.instance
 
         if ingredient_data:
             for ingredient in ingredient_data:
